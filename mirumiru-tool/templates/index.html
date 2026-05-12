@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>みるみる出品ツール</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+    background: #fafafa;
+    color: #333;
+  }
+  header {
+    background: white;
+    border-bottom: 2px solid #fce4ec;
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { color: #e91e63; font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+  header span { color: #999; font-size: 13px; }
+  .logout { color: #e91e63; text-decoration: none; font-size: 13px; margin-left: 16px; }
+  .logout:hover { text-decoration: underline; }
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+  .upload-area {
+    background: white;
+    border: 3px dashed #f48fb1;
+    border-radius: 20px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+  }
+  .upload-area:hover, .upload-area.dragover {
+    border-color: #e91e63;
+    background: #fce4ec;
+  }
+  .upload-icon { font-size: 48px; margin-bottom: 12px; }
+  .upload-area h2 { color: #e91e63; font-size: 18px; margin-bottom: 8px; }
+  .upload-area p { color: #999; font-size: 13px; }
+  #fileInput { display: none; }
+  .preview-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0;
+    justify-content: center;
+  }
+  .preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .preview-item img { width: 100%; height: 100%; object-fit: cover; }
+  .preview-item .remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(233,30,99,0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .btn-generate {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #e91e63, #f48fb1);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-generate:hover { opacity: 0.9; }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    color: #e91e63;
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #fce4ec;
+    border-top-color: #e91e63;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-area { display: none; margin-top: 32px; }
+  .result-block {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  }
+  .result-block h3 {
+    color: #e91e63;
+    font-size: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .result-text {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    color: #444;
+  }
+  .btn-copy {
+    background: #fce4ec;
+    color: #e91e63;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-copy:hover { background: #f48fb1; color: white; }
+  .btn-copy.copied { background: #4caf50; color: white; }
+  .btn-new {
+    width: 100%;
+    padding: 14px;
+    background: white;
+    color: #e91e63;
+    border: 2px solid #e91e63;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-new:hover { background: #fce4ec; }
+  .error-msg {
+    background: #fce4ec;
+    color: #c62828;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 16px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>mirumiru</h1>
+  <div>
+    <span>{{ user }} さん</span>
+    <a href="/logout" class="logout">ログアウト</a>
+  </div>
+</header>
+
+<div class="container">
+  <div id="uploadSection">
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">📷</div>
+      <h2>商品画像をアップロード</h2>
+      <p>クリックまたはドラッグ＆ドロップ<br>商品・タグ・採寸の画像をまとめて選択してください</p>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </div>
+
+    <div class="preview-grid" id="previewGrid"></div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <button class="btn-generate" id="generateBtn" onclick="generate()" disabled>
+      ✨ 出品データを生成する
+    </button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>AIが画像を解析中です...<br>少々お待ちください</p>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="result-block">
+      <h3>📦 メルカリタイトル <button class="btn-copy" onclick="copyText('mercariTitle', this)">コピー</button></h3>
+      <div class="result-text" id="mercariTitle"></div>
+    </div>
+    <div class="result-block">
+      <h3>🏷️ ヤフオクタイトル <button class="btn-copy" onclick="copyText('yahooTitle', this)">コピー</button></h3>
+      <div class="result-text" id="yahooTitle"></div>
+    </div>
+    <div class="result-block">
+      <h3>📝 商品説明 <button class="btn-copy" onclick="copyText('description', this)">コピー</button></h3>
+      <div class="result-text" id="description"></div>
+    </div>
+    <div class="result-block">
+      <h3>💰 相場分析 <button class="btn-copy" onclick="copyText('market', this)">コピー</button></h3>
+      <div class="result-text" id="market"></div>
+    </div>
+    <button class="btn-new" onclick="resetForm()">🔄 新しい商品を登録する</button>
+  </div>
+</div>
+
+<script>
+  let selectedFiles = [];
+
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
+  const previewGrid = document.getElementById('previewGrid');
+  const generateBtn = document.getElementById('generateBtn');
+
+  fileInput.addEventListener('change', e => addFiles(e.target.files));
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    addFiles(e.dataTransfer.files);
+  });
+
+  function addFiles(files) {
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        selectedFiles.push(file);
+        const reader = new FileReader();
+        reader.onload = e => {
+          const idx = selectedFiles.length - 1;
+          const div = document.createElement('div');
+          div.className = 'preview-item';
+          div.id = `preview-${idx}`;
+          div.innerHTML = `<img src="${e.target.result}"><button class="remove" onclick="removeFile(${idx})">×</button>`;
+          previewGrid.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    updateBtn();
+  }
+
+  function removeFile(idx) {
+    selectedFiles[idx] = null;
+    const el = document.getElementById(`preview-${idx}`);
+    if (el) el.remove();
+    updateBtn();
+  }
+
+  function updateBtn() {
+    const valid = selectedFiles.filter(f => f !== null).length > 0;
+    generateBtn.disabled = !valid;
+  }
+
+  async function generate() {
+    const files = selectedFiles.filter(f => f !== null);
+    if (!files.length) return;
+
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('errorMsg').style.display = 'none';
+
+    const formData = new FormData();
+    files.forEach(f => formData.append('images', f));
+
+    try {
+      const res = await fetch('/generate', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      document.getElementById('loading').style.display = 'none';
+
+      if (data.error) {
+        document.getElementById('uploadSection').style.display = 'block';
+        const err = document.getElementById('errorMsg');
+        err.textContent = data.error;
+        err.style.display = 'block';
+        return;
+      }
+
+      parseAndDisplay(data.result);
+      document.getElementById('resultArea').style.display = 'block';
+
+    } catch (e) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('uploadSection').style.display = 'block';
+      const err = document.getElementById('errorMsg');
+      err.textContent = '通信エラーが発生しました。再度お試しください。';
+      err.style.display = 'block';
+    }
+  }
+
+  function parseAndDisplay(text) {
+    const mercariMatch = text.match(/【メルカリタイトル】\s*([\s\S]*?)(?=【ヤフオクタイトル】|$)/);
+    const yahooMatch = text.match(/【ヤフオクタイトル】\s*([\s\S]*?)(?=【商品説明】|$)/);
+    const descMatch = text.match(/【商品説明】\s*([\s\S]*?)(?=【相場分析】|$)/);
+    const marketMatch = text.match(/【相場分析】\s*([\s\S]*?)$/);
+
+    document.getElementById('mercariTitle').textContent = mercariMatch ? mercariMatch[1].trim() : '';
+    document.getElementById('yahooTitle').textContent = yahooMatch ? yahooMatch[1].trim() : '';
+    document.getElementById('description').textContent = descMatch ? descMatch[1].trim() : text;
+    document.getElementById('market').textContent = marketMatch ? marketMatch[1].trim() : '';
+  }
+
+  function copyText(id, btn) {
+    const text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'コピー完了！';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function resetForm() {
+    selectedFiles = [];
+    previewGrid.innerHTML = '';
+    fileInput.value = '';
+    generateBtn.disabled = true;
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'block';
+  }
+</script>
+</body>
+</html>

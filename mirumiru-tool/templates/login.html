@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>みるみる出品ツール</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(233,30,99,0.15);
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo h1 {
+    font-size: 28px;
+    color: #e91e63;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .logo p {
+    color: #999;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #f0f0f0;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  input:focus { border-color: #e91e63; }
+  button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #e91e63, #f48fb1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 8px;
+  }
+  button:hover { opacity: 0.9; }
+  .error {
+    background: #fce4ec;
+    color: #c62828;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>mirumiru</h1>
+    <p>AI自動出品ツール</p>
+  </div>
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+  <form method="POST">
+    <label>ユーザー名</label>
+    <input type="text" name="username" placeholder="ユーザー名を入力" required autofocus>
+    <label>パスワード</label>
+    <input type="password" name="password" placeholder="パスワードを入力" required>
+    <button type="submit">ログイン</button>
+  </form>
+</div>
+</body>
+</html>
