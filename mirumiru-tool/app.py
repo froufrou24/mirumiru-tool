@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 import anthropic
 import base64
 import os
+from PIL import Image
+import io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'mirumiru-secret-2024')
@@ -185,16 +187,23 @@ def generate():
     content = []
     for file in files:
         if file and file.filename:
-            image_data = base64.standard_b64encode(file.read()).decode('utf-8')
-            media_type = file.content_type or 'image/jpeg'
-            content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": media_type,
-                    "data": image_data,
-                }
-            })
+          img = Image.open(file)
+if img.mode in ('RGBA', 'LA', 'P'):
+    img = img.convert('RGB')
+max_size = 1568
+if img.width > max_size or img.height > max_size:
+    img.thumbnail((max_size, max_size), Image.LANCZOS)
+output = io.BytesIO()
+img.save(output, format='JPEG', quality=80, optimize=True)
+image_data = base64.standard_b64encode(output.getvalue()).decode('utf-8')
+content.append({
+    "type": "image",
+    "source": {
+        "type": "base64",
+        "media_type": "image/jpeg",
+        "data": image_data,
+    }
+})
 
     content.append({
         "type": "text",
